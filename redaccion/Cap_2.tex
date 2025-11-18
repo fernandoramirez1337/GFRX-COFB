@@ -1,0 +1,199 @@
+\chapter{Marco Teórico}
+\label{chap:background}
+
+Este capítulo presenta el marco teórico fundamental para comprender la propuesta de esta tesis. Se inicia con una revisión del estado del arte en criptografía ligera, explorando los principales cifrados de bloque y modos de operación desarrollados para dispositivos con recursos limitados. Posteriormente, se desarrollan los conceptos fundamentales de cifrado autenticado con datos asociados \ac{AEAD}, el cifrado de bloque \ac{GFRX} y el modo \ac{COFB}, que constituyen los pilares teóricos de nuestra propuesta. Finalmente, se presentan las métricas de evaluación que permitirán validar y comparar la implementación propuesta.
+
+\section{Criptografía Ligera -- Estado del Arte}
+
+Esta sección presenta una revisión del desarrollo histórico y el estado actual de la criptografía ligera, destacando los principales cifrados de bloque y modos de operación diseñados específicamente para dispositivos con recursos limitados.
+
+\subsection{Evolución de la Criptografía Ligera}
+
+La criptografía ligera surge como respuesta a las limitaciones de recursos en dispositivos embebidos y del Internet de las Cosas \cite{yalli2024internet}. A diferencia de los algoritmos criptográficos tradicionales diseñados para computadoras de propósito general, la criptografía ligera prioriza la eficiencia en hardware y software con restricciones severas \cite{soto2024survey}\cite{thakor2021lightweight}.
+
+\subsection{Cifrados de Bloque Ligeros Relevantes}
+
+Entre los cifrados de bloque ligeros más destacados se encuentran los siguientes.
+
+\begin{itemize}
+    \item \textbf{PRESENT}, es uno de los primeros cifrados ligeros, basado en red \ac{SPN} con bloques de 64 bits \cite{bogdanov2007present}.
+    \item \textbf{SIMON/SPECK}, forman una familia de cifrados creada por la NSA, optimizados para hardware y software respectivamente \cite{cryptoeprint:2013/404}.
+    \item \textbf{GIFT}, representa una mejora de PRESENT con mejor difusión y menor costo de implementación \cite{banik2017gift}\cite{banik2020gift}.
+    \item \textbf{ASCON}, ganador del concurso CAESAR en 2016 para AEAD ligero, está basado en permutación esponja \cite{dobraunig2016ascon}\cite{dobraunig2021ascon}.
+    \item \textbf{GFRX}, es un cifrado innovador que combina estructura Feistel generalizada con operaciones ARX \cite{zhang2023gfrx}.
+\end{itemize}
+
+\subsection{Modos AEAD para Criptografía Ligera}
+
+Complementando los cifrados de bloque ligeros, se han desarrollado diversos modos de operación AEAD optimizados para minimizar el consumo de recursos \cite{mcgrew2008interface}. La Tabla~\ref{tab:aead_modes} compara los principales modos AEAD ligeros según sus características de estado y procesamiento. En esta tabla, $n$ representa el tamaño de bloque en bits, $k$ el tamaño de clave en bits, y $r$ la tasa de absorción en construcciones esponja.
+
+\begin{table}[h!]
+\centering
+\caption{Comparación de modos AEAD ligeros}
+\label{tab:aead_modes}
+\small
+\begin{tabular}{|l|c|c|p{3.5cm}|}
+\hline
+\textbf{Modo} & \textbf{Estado (bits)} & \textbf{Tasa} & \textbf{Características} \\
+\hline
+JAMBU \cite{wu2016jambu} & $1.5n$ & 1 bloque & Estado mínimo \\
+\hline
+COFB \cite{chakraborti2020blockcipher} & $1.5n+k$ & 1 bloque & Retroalimentación combinada \\
+\hline
+OCB \cite{krovetz2021design} & $2n+k$ & 1 bloque & Paralelizable, patentado \\
+\hline
+Esponja (ASCON) \cite{sonmez2024ascon} & Variable & r bits & Hash y cifrado integrado \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Cifrado Autenticado con Datos Asociados}
+
+El cifrado autenticado con datos asociados representa uno de los pilares fundamentales de la seguridad moderna en comunicaciones. Esta sección establece la definición formal y las propiedades de seguridad esenciales que debe cumplir cualquier esquema AEAD robusto \cite{krovetz2011software}.
+
+\subsection{Definición Formal}
+
+Un esquema AEAD es una tupla $(\mathcal{K}, \mathcal{E}, \mathcal{D})$ que incluye los siguientes elementos.
+
+\begin{itemize}
+    \item $\mathcal{K}$ representa el espacio de claves.
+    \item $\mathcal{E}$ es la función de cifrado definida como $\mathcal{K} \times \mathcal{N} \times \mathcal{A} \times \mathcal{M} \rightarrow \mathcal{C} \times \mathcal{T}$.
+    \item $\mathcal{D}$ es la función de descifrado definida como $\mathcal{K} \times \mathcal{N} \times \mathcal{A} \times \mathcal{C} \times \mathcal{T} \rightarrow \mathcal{M} \cup \{\bot\}$.
+\end{itemize}
+
+Donde $\mathcal{N}$ es el espacio de nonces, $\mathcal{A}$ los datos asociados, $\mathcal{M}$ el espacio de mensajes, $\mathcal{C}$ el espacio de textos cifrados, $\mathcal{T}$ las etiquetas de autenticación, y $\bot$ indica fallo de verificación \cite{rogaway2002authenticated}.
+
+\subsection{Propiedades de Seguridad}
+
+Un esquema AEAD seguro debe garantizar simultáneamente confidencialidad e integridad \cite{jimale2022authenticated}. A continuación se describen las dos propiedades fundamentales.
+
+\begin{table}[h!]
+\centering
+\caption{Propiedades de seguridad AEAD}
+\label{tab:aead_security}
+\footnotesize
+\begin{tabular}{|p{3cm}|p{8cm}|}
+\hline
+\textbf{Propiedad} & \textbf{Descripción} \\
+\hline
+\ac{IND-CPA} (Confidencialidad) & Un adversario no puede distinguir entre el cifrado de dos mensajes elegidos con probabilidad significativamente mayor a 1/2 \cite{bellare2000authenticated}. \\
+\hline
+\ac{INT-CTXT} (Autenticidad) & La probabilidad de que un adversario genere un texto cifrado y tag válidos sin conocer la clave es despreciable, típicamente limitada por el tamaño del tag \cite{bellare2000authenticated}. \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Cifrado de Bloque GFRX}
+
+GFRX es un cifrado de bloque ligero de reciente desarrollo que representa una innovación significativa en el diseño de primitivas criptográficas para dispositivos con recursos limitados. Esta sección detalla su estructura, parámetros y propiedades de seguridad \cite{zhang2023gfrx}.
+
+\subsection{Estructura y Parámetros}
+
+GFRX emplea una estructura Feistel generalizada de 4 ramas con funciones de ronda basadas en ARX. El estado se divide en cuatro palabras que se procesan mediante las funciones FAN (basada en AND/XOR con rotaciones) y FAD (basada en ADD con desplazamientos). Estas funciones no lineales se combinan con operaciones XOR utilizando subclaves derivadas de la clave maestra.
+
+La Tabla~\ref{tab:gfrx_params} presenta los parámetros principales de la variante GFRX-128/128 utilizada en esta propuesta.
+
+\begin{table}[h!]
+\centering
+\caption{Parámetros de GFRX-128/128}
+\label{tab:gfrx_params}
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Parámetro} & \textbf{Valor} \\
+\hline
+Tamaño de bloque & 128 bits \\
+\hline
+Tamaño de clave & 128 bits \\
+\hline
+Número de rondas & 32 \\
+\hline
+Operaciones por ronda & 3 AND/ADD, 4 ROT, 5 XOR \\
+\hline
+Estructura & Feistel generalizada (4 ramas) \\
+\hline
+Difusión completa & 6 rondas \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Análisis de Seguridad}
+
+La Tabla~\ref{tab:gfrx_security} resume el análisis de seguridad de GFRX-128/128 según el autor \cite{zhang2023gfrx}, mostrando un margen de seguridad superior al 40\% respecto a los mejores ataques conocidos.
+
+\begin{table}[h!]
+\centering
+\caption{Análisis de seguridad de GFRX-128/128}
+\label{tab:gfrx_security}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Tipo de ataque} & \textbf{Rondas atacadas} & \textbf{Margen de seguridad} \\
+\hline
+Diferencial & 19 rondas & 13 rondas (40.6\%) \\
+\hline
+Lineal & 13 rondas & 19 rondas (59.4\%) \\
+\hline
+Total de rondas & \multicolumn{2}{c|}{32 rondas} \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Modo COFB}
+
+El modo COFB es un modo de operación AEAD diseñado específicamente para minimizar los requisitos de estado, haciéndolo ideal para implementaciones en hardware con recursos extremadamente limitados. Esta sección describe sus componentes fundamentales y su algoritmo de procesamiento \cite{chakraborti2020blockcipher}.
+
+\subsection{Características Principales}
+
+COFB se caracteriza por utilizar una función de retroalimentación combinada que mezcla el texto plano con la salida del cifrado de bloque mediante operaciones XOR y una transformación lineal invertible. Esta función permite generar tanto el texto cifrado como la entrada para la siguiente invocación del cifrado de bloque de manera eficiente.
+
+El modo utiliza máscaras de 64 bits (la mitad del tamaño del bloque) generadas mediante multiplicación en el campo finito de Galois $\text{GF}(2^{64})$, lo que reduce significativamente los requisitos de estado comparado con otros modos AEAD. La Tabla~\ref{tab:cofb_features} resume las características principales del modo COFB, donde $|AD|$ denota el tamaño de los datos asociados en bits y $|M|$ el tamaño del mensaje en bits.
+
+\begin{table}[h!]
+\centering
+\caption{Características del modo COFB}
+\label{tab:cofb_features}
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Característica} & \textbf{Valor} \\
+\hline
+Estado requerido & $1.5n + k$ bits \\
+\hline
+Tamaño de máscara & $n/2$ bits (64 bits para n=128) \\
+\hline
+Tasa de procesamiento & 1 bloque por invocación \\
+\hline
+Paralelizable & No \\
+\hline
+Invocaciones del cifrado & $|AD|/n + |M|/n + 2$ \\
+\hline
+Campo finito para máscaras & GF($2^{64}$) \\
+\hline
+\end{tabular}
+\end{table}
+
+El procesamiento COFB se realiza en tres fases principales. Primero se inicializa el estado con el nonce, luego se procesan los datos asociados aplicando máscaras específicas, y finalmente se cifra el mensaje generando simultáneamente el texto cifrado y el tag de autenticación. Los detalles algorítmicos completos pueden consultarse en la especificación original \cite{chakraborti2020blockcipher}.
+
+\section{Métricas de Evaluación}
+
+Para evaluar objetivamente el rendimiento de cualquier implementación criptográfica en hardware, es fundamental establecer un conjunto de métricas cuantitativas. Esta sección define las métricas que se utilizarán para caracterizar la implementación propuesta.
+
+\subsection{Métricas de Hardware}
+Para evaluar el rendimiento hardware se considerarán las siguientes métricas siguiendo el framework de evaluación establecido \cite{konstantopoulou2025review}:
+\begin{itemize}
+    \item \textbf{Área} medida en LUTs, Slices y Registros
+    \item \textbf{Velocidad} evaluada mediante Throughput en Gbps y Latencia en ciclos por bloque
+    \item \textbf{Eficiencia} calculada como Mbps/LUT y Eficiencia energética en mW/Gbps
+\end{itemize}
+
+\subsection{Métricas de Seguridad}
+Para el análisis de seguridad se utilizarán las siguientes métricas basadas en estudios previos \cite{sun2021accelerating}\cite{khairallah2022security}:
+\begin{itemize}
+    \item Resistencia a falsificación hasta $2^{64}$ consultas
+    \item Análisis de colisiones en tags
+    \item Evaluación de reutilización de nonces
+\end{itemize}
+
+\section{Consideraciones Finales}
+
+Este capítulo ha establecido el marco teórico de la criptografía ligera, presentando el cifrado \ac{GFRX} \cite{zhang2023gfrx} con su estructura Feistel generalizada que alcanza difusión completa en 6 rondas, el modo \ac{COFB} \cite{chakraborti2020blockcipher} con su diseño minimalista de $1.5n+k$ bits de estado, y las métricas de evaluación que permitirán comparar nuestra propuesta con esquemas establecidos como AES-GCM, ASCON y GIFT-COFB.
+
+Con esta base teórica establecida, el siguiente capítulo presenta la propuesta de integración GFRX+COFB, detallando la arquitectura del sistema, la metodología de implementación y los resultados esperados.

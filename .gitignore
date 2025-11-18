@@ -1,0 +1,174 @@
+################################################################################
+# C/C++ Implementation
+################################################################################
+
+# Build artifacts
+build/
+bin/
+*.o
+*.a
+*.so
+*.dylib
+
+# Executables
+test_gfrx_cofb
+test_exhaustive
+ejemplo_simple
+
+# Compiler output
+*.out
+*.exe
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Core dumps
+core
+core.*
+vgcore.*
+
+################################################################################
+# LaTeX
+################################################################################
+
+# Main compilation outputs
+*.pdf
+*.dvi
+*.ps
+*.synctex.gz
+
+# Auxiliary files
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+*.lb
+
+# Bibliography
+*.bbl
+*.bcf
+*.blg
+*-blx.aux
+*-blx.bib
+*.run.xml
+
+# Build tools
+*.fdb_latexmk
+*.synctex
+*.synctex(busy)
+*.synctex.gz(busy)
+*.pdfsync
+
+# Multi-file projects
+*.end
+*.pag
+
+# Glossaries
+*.acn
+*.acr
+*.glg
+*.glo
+*.gls
+*.glsdefs
+*.lzo
+*.lzs
+
+# Indexes
+*.idx
+*.ilg
+*.ind
+
+# Nomenclature
+*.nlo
+*.nls
+
+# Hyperref
+*.out
+
+# natbib
+*.brf
+
+# Listings
+*.lol
+
+# Algorithms
+*.alg
+*.loa
+
+# Acronyms
+*.acr
+*.glg
+*.gls
+*.glsdefs
+
+# tikz & pgf
+*.pgf
+*.makefile
+*.figlist
+
+# Theorem environments
+*.thm
+
+# Changes tracking
+*.soc
+
+# Comment package
+*.cut
+
+# Arara
+*.arara
+
+# Beamer
+*.nav
+*.pre
+*.snm
+*.vrb
+
+# Latexmk
+*.fdb_latexmk
+
+# Backup and temporary
+*~
+*.backup
+*.bak
+*.sav
+
+# Build directories for LaTeX
+redaccion/compiled/
+redaccion/output/
+redaccion/build/
+
+# Keep final PDFs (uncomment specific files you want to track)
+# !redaccion/final.pdf
+# !redaccion/thesis.pdf
+
+################################################################################
+# General
+################################################################################
+
+# Editor/IDE files
+.vscode/
+.claude/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+*.tmp
+*.log
+
+# OS specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini

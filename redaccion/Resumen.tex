@@ -1,0 +1,13 @@
+\begin{center}
+\textbf{\MakeUppercase{Resumen}}
+\end{center}
+
+\vspace{1cm}
+
+El Internet de las Cosas (IoT) ha transformado radicalmente la interacción entre dispositivos físicos y sistemas digitales, con más de 40 mil millones de dispositivos conectados proyectados para 2030. Sin embargo, estos dispositivos enfrentan desafíos críticos de seguridad debido a sus recursos computacionales extremadamente limitados. Los esquemas tradicionales de cifrado autenticado con datos asociados (AEAD), como AES-GCM, resultan computacionalmente costosos para sensores IoT con menos de 10KB de RAM y procesadores de 8-16 bits.
+
+Esta tesis propone la primera implementación del cifrado autenticado GFRX+COFB, combinando el cifrado de bloque ligero GFRX con el modo de operación COFB. La implementación se desarrollará en lenguaje C para validación funcional y medición de rendimiento en software, utilizando posteriormente herramientas de síntesis de alto nivel para estimar características de hardware. GFRX, basado en una estructura Feistel generalizada con operaciones ARX, alcanza difusión completa en solo 6 rondas. El modo COFB minimiza el estado requerido a 1.5n+k bits (donde n es el tamaño de bloque y k el tamaño de clave), resultando en un esquema AEAD de solo 320 bits de estado total.
+
+\textbf{Palabras clave:} Criptografía ligera, AEAD, GFRX, COFB, Internet de las Cosas, cifrado autenticado, dispositivos con recursos limitados.
+
+\newpage

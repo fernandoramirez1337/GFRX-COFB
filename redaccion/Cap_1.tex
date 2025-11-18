@@ -1,0 +1,65 @@
+\chapter{Introducción}
+
+Este documento presenta una propuesta de tesis para la implementación del primer esquema de cifrado autenticado con datos asociados basado en el cifrado de bloque ligero \ac{GFRX} \cite{zhang2023gfrx} \cite{zhang2024gfspx} utilizando el modo \ac{COFB} \cite{chakraborti2020blockcipher}. El trabajo se enfoca en desarrollar una solución optimizada para dispositivos \ac{IoT} con recursos limitados, donde los esquemas criptográficos tradicionales resultan computacionalmente costosos.
+
+\section{Motivación y Contexto}
+
+El \ac{IoT} representa un paradigma tecnológico en expansión exponencial. Análisis de mercado recientes estiman que el número de dispositivos IoT activos, que fue de 16.6 mil millones en 2023, crecerá hasta alcanzar los 41.1 mil millones para el año 2030, como se ilustra en la Figura~\ref{fig:iot_growth_statista} \cite{IoTAnalytics2025_report}. Estos dispositivos, caracterizados por recursos computacionales extremadamente limitados, requieren soluciones criptográficas que garanticen tanto confidencialidad como autenticidad de los datos transmitidos, sin comprometer su funcionamiento eficiente \cite{yalli2024internet}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/grafico_iot_statista_2024.png}
+    \caption{Proyección de Dispositivos IoT Conectados \cite{IoTAnalytics2025_report}}
+    \label{fig:iot_growth_statista}
+\end{figure}
+
+En las ciudades inteligentes, se emplean sensores para gestionar el tráfico, vigilar la calidad del aire o reforzar la seguridad pública. En el ámbito de la salud, los dispositivos \ac{IoT} permiten monitorear a los pacientes a distancia, ofrecer diagnósticos más rápidos y personalizar tratamientos. En la industria, estas tecnologías impulsan la automatización, el mantenimiento predictivo y una mayor eficiencia operativa \cite{houssein2024internet}.
+
+Sin embargo, este crecimiento masivo también trae nuevos desafíos en materia de seguridad. Proteger la información personal de los pacientes, asegurar la infraestructura urbana y garantizar la integridad de procesos industriales se vuelve una prioridad crítica \cite{alsheavi2025iot}. Los dispositivos \ac{IoT} suelen estar conectados a redes abiertas o públicas, lo que los hace vulnerables a ataques. Un fallo de seguridad puede significar desde la filtración de datos hasta el acceso no autorizado a sistemas vitales \cite{houssein2024internet}\cite{cetintav2025review}.
+
+Los esquemas tradicionales de \ac{AEAD}, como \ac{AES}-\ac{GCM}, aunque seguros, resultan computacionalmente costosos para dispositivos con restricciones severas de área y energía \cite{dworkin2007recommendation}. \ac{AES}-\ac{GCM} requiere aproximadamente 3175 \ac{LUT}s en implementaciones \ac{FPGA}, lo cual representa una sobrecarga significativa para sensores \ac{IoT} que típicamente disponen de menos de 5000 \ac{LUT}s totales \cite{dalmasso2019evaluation} \cite{alenezi2024performance}.
+
+{\sloppy
+La criptografía ligera surge como respuesta a estas limitaciones \cite{mohd2018lightweight}\cite{thakor2021lightweight}, priorizando la eficiencia en hardware y software con restricciones severas. \ac{GFRX} representa un cifrado de bloque ligero innovador \cite{zhang2023gfrx} que combina una estructura Feistel generalizada con operaciones \ac{ARX}. Sus características principales incluyen difusión acelerada que alcanza el efecto avalancha completo en solo 6 rondas. Además, ofrece flexibilidad de serialización completa y estructura optimizada para hardware con consumo mínimo de recursos.
+\par}
+
+\ac{GFRX} nunca ha sido implementado en un esquema \ac{AEAD}, representando una oportunidad única para desarrollar una solución ligera para \ac{IoT}.
+
+\section{Planteamiento del Problema}
+
+Los esquemas actuales de cifrado autenticado con datos asociados están basados en cifrados de bloque convencionales como \ac{AES}, requiriendo una considerable cantidad de recursos computacionales que los hace poco adecuados para dispositivos con restricciones severas \cite{daemen1999aes}. Estos dispositivos presentan limitaciones de hardware con menos de 10KB de \ac{RAM} y procesadores de 8-16 bits, restricciones de consumo energético debido a la operación con baterías durante años, y necesidad de seguridad robusta para el manejo de información sensible \cite{houssein2024internet}. Es necesario desarrollar soluciones criptográficas compatibles con esquemas de autenticación y cifrado, basadas en cifrados de bloque ligeros adaptados específicamente a dispositivos \ac{IoT} \cite{soto2024survey}.
+
+\section{Objetivos}
+
+El objetivo general de esta tesis es el siguiente.
+
+Desarrollar y evaluar la primera implementación funcional en lenguaje C del esquema de cifrado autenticado con datos asociados \ac{GFRX}+\ac{COFB}, obteniendo métricas de rendimiento en software y estimaciones de características hardware mediante herramientas de síntesis de alto nivel, para dispositivos \ac{IoT} con recursos limitados \cite{zhang2023gfrx} \cite{chakraborti2020blockcipher}.
+
+\subsection{Objetivos Específicos}
+
+Para alcanzar el objetivo general, se han definido los siguientes objetivos específicos.
+
+\begin{enumerate}
+    \item Implementar en lenguaje C el cifrado de bloque ligero GFRX-128 y el modo \ac{COFB} manteniendo un estado mínimo de $1.5n+k$ bits, donde $n$ es el tamaño de bloque (128 bits) y $k$ el tamaño de clave (128 bits), resultando en 320 bits totales, con código modular y documentado que sirva como referencia funcional para futuras implementaciones en hardware.
+
+    \item Validar la correctitud funcional de la implementación mediante vectores de prueba exhaustivos, medir el rendimiento en software mediante herramientas de profiling (Valgrind, gprof), y utilizar herramientas open-source de síntesis de alto nivel para obtener estimaciones iniciales de métricas de hardware como \ac{LUT}s, registros, frecuencia máxima y consumo energético aproximado.
+
+    \item Analizar la resistencia teórica a ataques criptográficos del esquema hasta $2^{64}$ consultas y realizar una comparación cualitativa con esquemas \ac{AEAD} estándar como AES-GCM, ASCON y GIFT-COFB, considerando las diferencias metodológicas entre implementaciones reales en \ac{FPGA} y estimaciones basadas en síntesis de alto nivel \cite{banik2020gift}\cite{dobraunig2021ascon}.
+\end{enumerate}
+
+\section{Organización de la tesis}
+
+El restante de este documento de tesis está organizado de la siguiente forma.
+
+El Capítulo~\ref{chap:background} presenta el estado del arte y marco teórico sobre criptografía ligera, cifrados de bloque, esquemas \ac{AEAD}, el cifrado \ac{GFRX} y el modo \ac{COFB}.
+
+El Capítulo~\ref{chap:proposal} describe la propuesta de integración GFRX+COFB, incluyendo la arquitectura del sistema, metodología de implementación, enfoque de validación y evaluación, así como los resultados esperados.
+
+\section{Cronograma}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{figs/cronograma.png}
+    \caption{Mi cronograma}
+    \label{fig:crocro}
+\end{figure}

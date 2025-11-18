@@ -1,0 +1,96 @@
+% Template LaTeX Tesis Ciencia de la Computación UCSP
+% 2022
+
+\documentclass[a4paper,openany,12pt]{book}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage[spanish,mexico]{babel}
+\usepackage{sty/fancyhdr}
+\usepackage{ae}
+\usepackage[left=2.5cm,right=2.5cm,top=3cm,bottom=2cm]{geometry}
+\usepackage[printonlyused]{acronym}
+\usepackage{xspace}
+\usepackage{sty/hlundef}
+\usepackage{sty/tesis}
+\usepackage{setspace}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{rotating}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{microtype}
+
+% Configuración de listings para código
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    numbers=left,
+    numberstyle=\tiny,
+    frame=single,
+    captionpos=b,
+    tabsize=4
+}
+
+\title{Implementación de Cifrado Autenticado con Datos Asociados GFRX+COFB para entornos IoT}
+
+
+\author{Fernando Ramirez Arredondo}
+
+
+\advisor{Dr. Yván Jesús Túpac Valdivia}
+
+
+\date{Arequipa, Octubre 2025}
+
+
+\dedicado{A mis padres, por todo lo que me han dado.}
+
+\begin{document}
+\pagestyle{fancy}
+
+\maketitle %Compone la carátula y la dedicatoria
+\newpage
+
+%\approved{\tres}%  {\tres} or {\cuatro}
+
+\include{abreviaturas}
+
+\input{Agradecimientos} %Inserta los agradecimientos
+\input{Resumen} %Inserta el resumen
+\input{Abstract} %Inserta el abstract
+
+\pagenumbering{roman}
+\setcounter{page}{1}
+\pagestyle{plain}
+
+\tableofcontents %Inserta el índice general
+\listoftables %Inserta el índice de cuadros
+\listoffigures %Inserta el índice de figuras
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%   En esta parte deberas incluir los archivos de tu tesis   %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\pagestyle{plain}
+\pagenumbering{arabic}
+\setcounter{page}{1}
+\input{Cap_1} %Inserta el capítulo 1: Introducción
+\input{Cap_2} %Inserta el capítulo 2: Estado del Arte/Marco Teórico
+\input{Cap_3} %Inserta el capítulo 3: Propuesta
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bibliographystyle{apalike}
+
+\bibliography{Bibliog}
+\addcontentsline{toc}{chapter}{Bibliografía}
+
+\end{document}

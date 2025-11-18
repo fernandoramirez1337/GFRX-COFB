@@ -1,0 +1,319 @@
+\chapter{Propuesta}
+\label{chap:proposal}
+
+\section{Introducción a la Propuesta}
+
+Esta tesis propone la primera implementación del modo COFB \cite{chakraborti2020blockcipher} utilizando GFRX \cite{zhang2023gfrx} como primitiva base de cifrado. COFB, es un modo AEAD que minimiza el tamaño de estado a $1.5n+k$ bits, donde $n$ es el tamaño del bloque y $k$ el tamaño de la clave.
+
+La combinación GFRX+COFB promete ofrecer una solución ligera para dispositivos IoT con las siguientes características esperadas. La Figura~\ref{fig:arquitectura_gfrx_cofb} diagrama la forma en que COFB actúa como el controlador lógico que utiliza la primitiva de cifrado GFRX como motor.
+
+\begin{figure}[htbp!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/arquitectura_gfrx_cofb.png}
+    \caption{Arquitectura de alto nivel del sistema AEAD GFRX+COFB propuesto.}
+    \label{fig:arquitectura_gfrx_cofb}
+\end{figure}
+
+\section{Arquitectura General del Sistema}
+
+Esta sección describe la estructura modular del sistema GFRX+COFB propuesto, detallando cada uno de sus componentes principales y el flujo de procesamiento que seguirá la información a través del sistema.
+
+\subsection{Componentes Principales}
+
+La arquitectura propuesta de GFRX+COFB se organizará en cinco módulos principales.
+
+\begin{enumerate}
+    \item \textbf{GFRX\_Core} será el núcleo que implementará el cifrado de bloque GFRX-128 con 32 rondas. Este módulo será el componente más crítico en términos de área y velocidad.
+
+    \item \textbf{COFB\_Controller} consistirá en una máquina de estados finitos FSM que controlará el flujo de procesamiento AEAD, gestionando las diferentes fases como inicialización, procesamiento de datos asociados, cifrado de mensaje y generación/verificación de tag.
+
+    \item \textbf{Feedback\_Function} implementará las funciones $\rho$ y $\rho^{-1}$ para manejar la retroalimentación combinada tanto en modo cifrado como descifrado.
+
+    \item \textbf{Mask\_Generator} generará y actualizará las máscaras de 64 bits utilizando multiplicación en $\text{GF}(2^{64})$ según el contexto de AD o mensaje.
+
+    \item \textbf{Interface\_Module} proporcionará la interfaz estándar para operaciones AEAD \cite{mcgrew2008interface}, compatible con las especificaciones de criptografía ligera del \ac{NIST} \cite{nist2023lightweight}.
+\end{enumerate}
+
+\subsection{Flujo de Procesamiento}
+
+El sistema seguirá un flujo secuencial de procesamiento que comprende cuatro etapas principales. La Tabla~\ref{tab:processing_flow} describe cada etapa y sus entradas/salidas.
+
+\begin{table}[h!]
+\centering
+\caption{Flujo de procesamiento GFRX+COFB}
+\label{tab:processing_flow}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Etapa} & \textbf{Entrada} & \textbf{Salida} \\
+\hline
+Inicialización & Nonce (N), Clave (K) & Estado inicial \\
+\hline
+Procesamiento AD & Datos asociados (A) & Estado actualizado \\
+\hline
+Procesamiento Mensaje & Mensaje (M) & Texto cifrado (C) \\
+\hline
+Generación Tag & Estado final & Tag de autenticación (T) \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Metodología de Diseño}
+
+Esta sección presenta las decisiones fundamentales de diseño que guiarán la implementación del sistema, incluyendo el enfoque arquitectural, las estrategias de optimización y los detalles específicos de cada componente crítico.
+
+\subsection{Enfoque de Diseño}
+
+Se propone una metodología de diseño en dos etapas. Primero, se implementará el sistema completo en lenguaje C, lo que permitirá validación funcional rápida y medición de métricas de software. Segundo, se utilizarán herramientas de síntesis de alto nivel para obtener estimaciones de las características de hardware sin necesidad de implementación manual en HDL. Esta decisión de diseño balanceará los siguientes aspectos.
+
+\begin{itemize}
+    \item \textbf{Velocidad de desarrollo} mediante implementación directa en C
+    \item \textbf{Validación funcional} rápida con herramientas estándar de software
+    \item \textbf{Estimación de hardware} mediante simuladores de síntesis de alto nivel
+    \item \textbf{Optimización iterativa} entre implementación C y proyección hardware
+\end{itemize}
+
+\subsection{Diseño del Núcleo GFRX-128}
+
+El núcleo GFRX se implementará en C siguiendo la estructura Feistel generalizada de 4 ramas con las funciones FAN y FAD. Los componentes clave incluirán los siguientes elementos.
+
+\begin{itemize}
+    \item Funciones FAN y FAD implementadas como operaciones bit a bit en C
+    \item Estado representado mediante arreglos de enteros de 32 bits
+    \item Bucle de rondas parametrizable para facilitar análisis de seguridad
+    \item Módulo de expansión de clave eficiente usando rotaciones y XOR
+\end{itemize}
+
+\subsection{Implementación del Modo COFB}
+
+La implementación del modo COFB en C requerirá los siguientes componentes.
+
+\begin{itemize}
+    \item Función lineal invertible $G$ implementada mediante operaciones XOR
+    \item Generador de máscaras basado en multiplicación en $\text{GF}(2^{64})$
+    \item Funciones de padding para bloques incompletos
+    \item Gestión de contexto para diferenciar procesamiento de AD y mensaje
+\end{itemize}
+
+\section{Metodología de Implementación}
+
+Esta sección detalla el plan de implementación del sistema propuesto, especificando las herramientas que se utilizarán y las fases secuenciales en las que se estructurará el desarrollo del proyecto.
+
+\subsection{Herramientas de Desarrollo}
+
+La Tabla~\ref{tab:dev_tools} presenta las herramientas de desarrollo que se utilizarán para la implementación en software, análisis de rendimiento y estimación de características hardware.
+
+\begin{table}[h!]
+\centering
+\caption{Herramientas de desarrollo}
+\label{tab:dev_tools}
+\begin{tabular}{|l|l|p{5cm}|}
+\hline
+\textbf{Categoría} & \textbf{Herramienta} & \textbf{Propósito} \\
+\hline
+Lenguaje & C (C99/C11) & Implementación funcional \\
+\hline
+Compilador & GCC / Clang & Compilación y optimización \\
+\hline
+Profiling & Valgrind / gprof & Análisis de rendimiento software \\
+\hline
+Síntesis \ac{HLS} & LegUp / Bambu \ac{HLS} & Estimación open-source de métricas hardware \\
+\hline
+Testing & CUnit / Google Test & Framework de pruebas unitarias \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Fases de Implementación}
+
+La Tabla~\ref{tab:implementation_phases} detalla las cuatro fases de implementación del proyecto, sus componentes principales y duración estimada.
+
+\begin{table}[h!]
+\centering
+\caption{Fases de implementación del proyecto}
+\label{tab:implementation_phases}
+\begin{tabular}{|l|p{7cm}|}
+\hline
+\textbf{Fase} & \textbf{Componentes}\\
+\hline
+Fase 1: GFRX en C & Funciones de ronda, expansión de claves, cifrado completo de 32 rondas \\
+\hline
+Fase 2: COFB en C & Función de retroalimentación, generador de máscaras $\text{GF}(2^{64})$, interfaz AEAD \\
+\hline
+Fase 3: Validación & Vectores de prueba, validación funcional, profiling de rendimiento software \\
+\hline
+Fase 4: Síntesis \ac{HLS} & Síntesis de alto nivel, estimación de área, frecuencia y potencia en hardware \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Metodología de Validación}
+
+La validación del sistema es fundamental para garantizar su correctitud funcional. Esta sección describe la estrategia multinivel de validación que se aplicará, los tipos de vectores de prueba que se generarán y el rol de la implementación de referencia en software.
+
+\subsection{Validación Funcional}
+
+La Tabla~\ref{tab:validation_levels} describe los tres niveles de validación funcional que se aplicarán para garantizar la correctitud del sistema.
+
+\begin{table}[h!]
+\centering
+\caption{Niveles de validación funcional}
+\label{tab:validation_levels}
+\begin{tabular}{|l|p{6cm}|p{4cm}|}
+\hline
+\textbf{Nivel} & \textbf{Alcance} & \textbf{Módulos objetivo} \\
+\hline
+Componente & Pruebas unitarias individuales & GFRX\_Core, Feedback\_Function, Mask\_Generator \\
+\hline
+Integración & Pruebas de interfaces entre módulos & Todos los módulos integrados \\
+\hline
+Sistema & Pruebas end-to-end completas & Sistema GFRX+COFB completo \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Vectores de Prueba}
+
+Se generarán vectores de prueba exhaustivos que incluirán los siguientes tipos.
+
+\begin{itemize}
+    \item Vectores básicos con mensajes y AD de longitud variable
+    \item Casos extremos considerando longitud cero, bloques incompletos y múltiples bloques
+    \item Vectores de regresión formando un conjunto estándar para verificación continua
+    \item Vectores aleatorios generados para pruebas de robustez
+\end{itemize}
+
+\subsection{Implementación de Referencia}
+
+La implementación en C servirá simultáneamente como implementación funcional y de referencia para los siguientes propósitos.
+
+\begin{itemize}
+    \item Generar vectores de prueba confiables mediante ejecución directa
+    \item Validar la correctitud mediante comparación con especificaciones
+    \item Realizar análisis de cobertura de código mediante herramientas de profiling
+    \item Servir como entrada para herramientas de síntesis de alto nivel
+\end{itemize}
+
+\section{Metodología de Evaluación}
+
+Para caracterizar el desempeño del sistema propuesto de manera objetiva y completa, es esencial definir un conjunto de métricas cuantitativas y realizar comparaciones con esquemas existentes. Esta sección establece las métricas de hardware y seguridad que se utilizarán, así como el marco de comparación con otros esquemas AEAD.
+
+\subsection{Métricas de Evaluación}
+
+La evaluación considerará tanto métricas de software como estimaciones de hardware. Las métricas de evaluación para implementaciones de criptografía ligera deben considerar múltiples dimensiones de rendimiento \cite{mckay2016report}. Siguiendo las directrices de \ac{NIST}, definimos métricas tanto de hardware como de software. La Tabla~\ref{tab:metricas_evaluacion_detalladas} presenta las métricas que se medirán o estimarán.
+
+\begin{table}[htbp]
+\centering
+\caption{Métricas de evaluación basadas en framework ATHENa y estándares \ac{NIST}}
+\label{tab:metricas_evaluacion_detalladas}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Categoría} & \textbf{Métrica} & \textbf{Método} \\
+\midrule
+\multirow{3}{*}{Software}
+& Throughput (Mbps) & Medición directa \\
+& Ciclos/bloque & Profiling (gprof) \\
+& Memoria (KB) & Runtime analysis \\
+\midrule
+\multirow{5}{*}{\begin{tabular}[c]{@{}l@{}}Hardware\\(\ac{HLS} estimado)\end{tabular}}
+& LUTs/Slices & Síntesis \ac{HLS} \\
+& Registros (FF) & Reportes \ac{HLS} \\
+& Frecuencia (MHz) & Timing analysis \\
+& Latencia (ciclos) & Simulación \ac{HLS} \\
+& Throughput-to-Area & Mbps/LUT \\
+\midrule
+\multirow{4}{*}{Seguridad}
+& Resistencia forgery & Análisis teórico \\
+& Birthday bound & $2^{n/2}$ consultas \\
+& Límites de uso & Consultas seguras \\
+& Margen seguridad & Rondas adicionales \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+{\sloppy
+Dado que utilizamos síntesis de alto nivel (\ac{HLS}) para obtener estimaciones de características hardware, justificamos este enfoque basándonos en estudios previos \cite{homsirikamol2014can}\cite{homsirikamol2015hardware}. Estos demuestran que el ranking relativo de algoritmos permanece consistente al comparar \ac{HLS} y \ac{HDL} manual.
+\par}
+
+\subsection{Métricas de Seguridad}
+
+El análisis de seguridad de GFRX+COFB considera múltiples vectores de ataque. Para el modo COFB específicamente, analizamos la resistencia a ataques de falsificación siguiendo la metodología de Khairallah \cite{khairallah2022security} e Inoue y Minematsu \cite{inoue2021gift}.
+Evaluamos las siguientes propiedades de seguridad AEAD \cite{cremers2023automated}.
+\begin{itemize}
+\item Confidencialidad (\ac{IND-CPA})
+\item Integridad (\ac{INT-CTXT})  
+\item Resistencia a nonce-misuse
+\item Límites de uso seguros \cite{gunther2023usage}
+\end{itemize}
+
+\subsection{Comparación con Esquemas Existentes}
+
+Se realizará una comparación con esquemas AEAD representativos del estado del arte siguiendo el proceso de evaluación de \ac{NIST} \cite{nist2023lightweight}. Los esquemas seleccionados son:
+
+\begin{itemize}
+\item \textbf{AES-GCM} \cite{dworkin2007recommendation}: Estándar actual para aplicaciones generales
+\item \textbf{ASCON} \cite{sonmez2024ascon}: Ganador del concurso \ac{NIST} LWC 2023
+\item \textbf{GIFT-COFB} \cite{inoue2021gift}: Esquema comparable usando COFB como modo de operación
+\item \textbf{TinyJAMBU} \cite{wu2019tinyjambu}: Finalista NIST LWC, modo ultra-ligero
+\end{itemize}
+
+La Tabla~\ref{tab:esquemas_aead_comparacion} presenta una comparación de las características principales de estos esquemas basada en implementaciones reportadas en el benchmark ATHENa \cite{mohajerani2020fpga} y análisis recientes \cite{konstantopoulou2025review}.
+
+\begin{table}[h!]
+\centering
+\caption{Comparación de esquemas AEAD (valores aproximados de literatura)}
+\label{tab:esquemas_aead_comparacion}
+\small
+\begin{tabular}{|l|l|c|c|c|l|}
+\hline
+\textbf{Esquema} & \textbf{Primitiva} & \textbf{Estado} & \textbf{LUTs} & \textbf{Throughput} & \textbf{Tipo} \\
+ & & \textbf{(bits)} & \textbf{(aprox)} & \textbf{@ 100MHz} & \textbf{Impl.} \\
+\hline
+AES-GCM & AES-128 & 384 & $\sim$3175 & 1.28 Gbps & FPGA Real \\
+\hline
+ASCON & Permutación & 320 & $\sim$1712 & 640 Mbps & FPGA Real \\
+\hline
+GIFT-COFB & GIFT-128 & 320 & $\sim$1450 & 400 Mbps & FPGA Real \\
+\hline
+TinyJAMBU & TJ-128 & 288 & $\sim$800 & 200 Mbps & FPGA Real \\
+\hline
+\textbf{GFRX+COFB} & \textbf{GFRX-128} & \textbf{320} & \textbf{A medir} & \textbf{A medir} & \textbf{\ac{HLS} Est.} \\
+\textbf{(propuesto)} & & & & & \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Nota importante:} Los valores de AES-GCM, ASCON, GIFT-COFB y TinyJAMBU corresponden a implementaciones FPGA reales reportadas en literatura científica. Los valores de GFRX+COFB se obtendrán mediante la implementación y síntesis \ac{HLS} propuesta en esta tesis.
+
+La comparación evaluará área de hardware (LUTs y Slices), throughput y eficiencia (Mbps/LUT), consumo energético, nivel de seguridad teórico y estado requerido, siguiendo las prácticas establecidas \cite{jimale2022authenticated}.
+
+\section{Resultados Esperados}
+
+Se espera que la implementación GFRX+COFB propuesta alcance los siguientes resultados, reconociendo que las métricas de hardware son estimaciones preliminares sujetas a las limitaciones inherentes a las herramientas de síntesis de alto nivel.
+
+\begin{enumerate}
+    \item \textbf{Implementación funcional en C} completa y validada con vectores de prueba exhaustivos, que servirá como referencia para futuras implementaciones en hardware.
+
+    \item \textbf{Métricas de rendimiento en software} medidas mediante profiling con herramientas estándar en procesadores embebidos típicos (ARM Cortex-M, RISC-V) \cite{krovetz2011software}.
+
+    \item \textbf{Estimaciones de área hardware} obtenidas mediante herramientas open-source de síntesis \ac{HLS}, que permitirán una comparación cualitativa con esquemas como GIFT-COFB \cite{banik2020gift}, reconociendo un margen de incertidumbre respecto a implementaciones \ac{RTL} optimizadas manualmente.
+
+    \item \textbf{Estado mínimo} de 320 bits totales ($1.5n+k$ con $n=128, k=128$) verificado en la implementación, representando uno de los requisitos de estado más bajos entre esquemas AEAD de 128 bits.
+
+    \item \textbf{Estimaciones de throughput hardware} obtenidas mediante síntesis \ac{HLS}, dependiendo significativamente del nivel de optimización logrado y las características de la herramienta utilizada.
+
+    \item \textbf{Seguridad teórica robusta} heredada de GFRX (margen mayor al 40\% contra ataques diferenciales y lineales) \cite{zhang2023gfrx} y del modo COFB (seguridad probada hasta $2^{64}$ consultas) \cite{chakraborti2020blockcipher}, sin implementación práctica de ataques de canal lateral.
+
+    \item \textbf{Estimaciones de consumo energético} obtenidas mediante herramientas \ac{HLS}, reconociendo que estas estimaciones pueden variar significativamente en implementaciones FPGA reales.
+\end{enumerate}
+
+{\sloppy
+Los resultados obtenidos permitirán evaluar si GFRX+COFB puede posicionarse como una alternativa competitiva para dispositivos IoT con severas restricciones de recursos \cite{mohd2018lightweight}. La validación definitiva de estas características requeriría una implementación \ac{RTL} completa y pruebas en hardware real, lo cual queda fuera del alcance de esta tesis pero se propone como trabajo futuro.
+\par}
+
+\section{Consideraciones Finales}
+
+Este capítulo ha presentado la propuesta completa para la implementación del primer esquema GFRX+COFB, incluyendo una arquitectura de cinco módulos principales, una metodología de diseño basada en implementación en C seguida de síntesis \ac{HLS}, y un plan de cuatro fases con tres niveles de validación funcional. El estado mínimo de 320 bits y las métricas de evaluación definidas permitirán comparar la propuesta con esquemas establecidos como AES-GCM, ASCON y GIFT-COFB.
+
+Es importante reconocer las limitaciones inherentes: las estimaciones \ac{HLS} son preliminares y pueden diferir de implementaciones \ac{RTL} optimizadas, el análisis de seguridad se fundamenta en las propiedades demostradas en las publicaciones originales sin implementación práctica de ataques, y no se contempla validación en hardware real. Los resultados esperados incluyen una implementación funcional en C validada exhaustivamente con métricas de software y estimaciones hardware preliminares.
+
+Con la arquitectura y metodología establecidas, el siguiente paso será ejecutar la implementación para validar experimentalmente las características de GFRX+COFB y evaluar su viabilidad como solución criptográfica ligera para dispositivos \ac{IoT}.

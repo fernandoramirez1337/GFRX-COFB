@@ -1,0 +1,13 @@
+\begin{center}
+\textbf{\MakeUppercase{Abstract}}
+\end{center}
+
+\vspace{1cm}
+
+The Internet of Things (IoT) has radically transformed the interaction between physical devices and digital systems, with over 40 billion connected devices projected by 2030. However, these devices face critical security challenges due to their extremely limited computational resources. Traditional Authenticated Encryption with Associated Data (AEAD) schemes, such as AES-GCM, are computationally expensive for IoT sensors with less than 10KB of RAM and 8-16 bit processors.
+
+This thesis proposes the first implementation of GFRX+COFB authenticated encryption, combining the lightweight block cipher GFRX with the COFB operating mode. The implementation will be developed in C language for functional validation and software performance measurement, subsequently using high-level synthesis tools to estimate hardware characteristics. GFRX, based on a generalized Feistel structure with ARX operations, achieves full diffusion in only 6 rounds. The COFB mode minimizes the required state to 1.5n+k bits (where n is the block size and k the key size), resulting in an AEAD scheme with only 320 bits of total state.
+
+\textbf{Keywords:} Lightweight cryptography, AEAD, GFRX, COFB, Internet of Things, authenticated encryption, resource-constrained devices.
+
+\newpage

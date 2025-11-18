@@ -1,0 +1,275 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{Madrid}
+\usecolortheme{default}
+
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{colortbl}
+\usepackage[table]{xcolor}
+
+\title{Implementación de Cifrado Autenticado con Datos Asociados GFRX+COFB para entornos IoT}
+\author{Fernando Ramirez Arredondo\\
+\vspace{0.3cm}
+\small Asesor: Dr. Yván Jesús Túpac Valdivia\\
+\vspace{0.3cm}
+Universidad Católica San Pablo}
+\date{Arequipa, Octubre 2025}
+
+\begin{document}
+
+% Slide 1: Título
+\begin{frame}
+\titlepage
+\end{frame}
+
+% Slide 2: Motivación - Crecimiento IoT
+\begin{frame}{Crecimiento Exponencial del IoT}
+\begin{figure}
+\centering
+\includegraphics[width=0.85\textwidth]{../figs/grafico_iot_statista_2024.png}
+\end{figure}
+\vspace{-0.3cm}
+\centering
+\small{41.1 mil millones de dispositivos conectados proyectados para 2030}
+\end{frame}
+
+% Slide 3: Problema
+\begin{frame}{El Problema}
+\begin{center}
+\Large
+\textbf{Dispositivos IoT con recursos limitados}
+\vspace{1cm}
+
+\normalsize
+\begin{itemize}
+\item RAM: $<$10 KB
+\item Procesadores: 8-16 bits
+\item LUTs disponibles: $<$5000
+\end{itemize}
+
+\vspace{1cm}
+\Large
+AES-GCM requiere $\sim$3175 LUTs
+\end{center}
+\end{frame}
+
+% Slide 4: Objetivos
+\begin{frame}{Objetivo General}
+\begin{center}
+\Large
+Desarrollar la primera implementación funcional de GFRX+COFB
+\vspace{1cm}
+
+\normalsize
+\begin{itemize}
+\item Implementación en C para validación funcional
+\item Síntesis HLS para estimación de características hardware
+\item Estado mínimo de 320 bits (1.5n+k)
+\end{itemize}
+\end{center}
+\end{frame}
+
+% Slide 5: Parámetros GFRX
+\begin{frame}{Parámetros de GFRX-128/128}
+\begin{center}
+\begin{tabular}{lc}
+\toprule
+\textbf{Parámetro} & \textbf{Valor} \\
+\midrule
+Tamaño de bloque & 128 bits \\
+Tamaño de clave & 128 bits \\
+Número de rondas & 32 \\
+Operaciones por ronda & 3 AND/ADD, 4 ROT, 5 XOR \\
+Estructura & Feistel generalizada (4 ramas) \\
+\rowcolor{green!30}
+\textbf{Difusión completa} & \textbf{6 rondas} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{frame}
+
+% Slide 6: Comparación Modos AEAD
+\begin{frame}{Modos AEAD Ligeros - Comparación}
+\begin{center}
+\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{Modo} & \textbf{Estado (bits)} & \textbf{Tasa} & \textbf{Característica Principal} \\
+\midrule
+JAMBU & 1.5n & 1 bloque & Estado mínimo \\
+\rowcolor{yellow!30}
+\textbf{COFB} & \textbf{1.5n+k} & \textbf{1 bloque} & \textbf{Retroalimentación combinada} \\
+OCB & 2n+k & 1 bloque & Paralelizable \\
+ASCON & Variable & r bits & Hash integrado \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{0.3cm}
+\centering
+COFB: Diseño minimalista con máscaras de 64 bits en GF($2^{64}$)
+\end{frame}
+
+% Slide 7: Características COFB
+\begin{frame}{Características del Modo COFB}
+\begin{center}
+\begin{tabular}{lc}
+\toprule
+\textbf{Característica} & \textbf{Valor} \\
+\midrule
+\rowcolor{green!30}
+\textbf{Estado requerido} & \textbf{1.5n + k bits} \\
+Tamaño de máscara & n/2 bits (64 bits) \\
+Tasa de procesamiento & 1 bloque por invocación \\
+Paralelizable & No \\
+Campo finito & GF($2^{64}$) \\
+Seguridad & $2^{64}$ consultas \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{0.3cm}
+\centering
+Para n=128, k=128: Estado total = \textbf{320 bits}
+\end{frame}
+
+% Slide 8: Arquitectura Propuesta
+\begin{frame}{Arquitectura GFRX+COFB}
+\begin{center}
+\includegraphics[height=0.7\textheight]{../figs/arquitectura_gfrx_cofb.png}
+\end{center}
+\vspace{-0.2cm}
+\centering
+\tiny{5 módulos: GFRX\_Core, COFB\_Controller, Feedback\_Function, Mask\_Generator, Interface\_Module}
+\end{frame}
+
+% Slide 9: Metodología
+\begin{frame}{Metodología de Diseño}
+\begin{center}
+\Large
+\textbf{Enfoque en dos etapas}
+\vspace{1cm}
+
+\begin{columns}
+\column{0.45\textwidth}
+\centering
+\textbf{Etapa 1}
+\vspace{0.3cm}
+
+Implementación en C
+\begin{itemize}
+\item Validación funcional
+\item Métricas software
+\item Profiling
+\end{itemize}
+
+\column{0.45\textwidth}
+\centering
+\textbf{Etapa 2}
+\vspace{0.3cm}
+
+Síntesis HLS
+\begin{itemize}
+\item LegUp / Bambu
+\item Estimación hardware
+\item Caracterización
+\end{itemize}
+\end{columns}
+\end{center}
+\end{frame}
+
+% Slide 10: Plan de Implementación
+\begin{frame}{Plan de Implementación}
+\begin{center}
+\small
+\begin{tabular}{clc}
+\toprule
+\textbf{Fase} & \textbf{Actividad} & \textbf{Objetivo} \\
+\midrule
+1 & Implementación GFRX-128 en C & Núcleo funcional \\
+2 & Implementación COFB en C & Modo AEAD completo \\
+3 & Validación funcional exhaustiva & Correctitud verificada \\
+4 & Síntesis HLS & Estimación hardware \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{0.5cm}
+\centering
+3 niveles de validación: Vectores unitarios, integración, compliance NIST
+\end{frame}
+
+% Slide 11: Comparación con Esquemas Establecidos
+\begin{frame}{Comparación con Esquemas AEAD Establecidos}
+\begin{center}
+\tiny
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Esquema} & \textbf{Primitiva} & \textbf{Estado} & \textbf{LUTs} & \textbf{Throughput} & \textbf{Tipo} \\
+ & & \textbf{(bits)} & \textbf{(aprox)} & \textbf{@100MHz} & \textbf{Impl.} \\
+\midrule
+AES-GCM & AES-128 & 384 & $\sim$3175 & 1.28 Gbps & FPGA Real \\
+ASCON & Permutación & 320 & $\sim$1712 & 640 Mbps & FPGA Real \\
+GIFT-COFB & GIFT-128 & 320 & $\sim$1450 & 400 Mbps & FPGA Real \\
+TinyJAMBU & TJ-128 & 288 & $\sim$800 & 200 Mbps & FPGA Real \\
+\midrule
+\rowcolor{yellow!30}
+\textbf{GFRX+COFB} & \textbf{GFRX-128} & \textbf{320} & \textbf{A medir} & \textbf{A medir} & \textbf{HLS Est.} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\centering
+\end{frame}
+
+% Slide 12: Resultados Esperados
+\begin{frame}{Resultados Esperados}
+\begin{center}
+\begin{itemize}
+\item \textbf{Implementación funcional en C} completa y validada
+\vspace{0.3cm}
+\item \textbf{Métricas de software} mediante profiling (Valgrind, gprof)
+\vspace{0.3cm}
+\item \textbf{Estado mínimo verificado:} 320 bits totales
+\vspace{0.3cm}
+\item \textbf{Estimaciones HLS:} Área, throughput y consumo energético
+\vspace{0.3cm}
+\item \textbf{Seguridad teórica:} GFRX (40\% margen) + COFB ($2^{64}$ consultas)
+\vspace{0.3cm}
+\item \textbf{Comparación cualitativa} con AES-GCM, ASCON, GIFT-COFB
+\end{itemize}
+\end{center}
+\end{frame}
+
+% Slide 13: Conclusiones
+\begin{frame}{Conclusiones}
+\begin{center}
+\Large
+\vspace{1cm}
+
+\normalsize
+\begin{itemize}
+\item Estado mínimo: 320 bits (uno de los más bajos)
+\vspace{0.3cm}
+\item Metodología: C + HLS para estimación hardware
+\vspace{0.3cm}
+\item Potencial alternativa competitiva para IoT
+\vspace{0.3cm}
+\item Trabajo futuro: Implementación RTL y validación en hardware real
+\end{itemize}
+\end{center}
+\end{frame}
+
+% Slide 14: Agradecimientos
+\begin{frame}
+\begin{center}
+\Huge
+¿Preguntas?
+\vspace{2cm}
+
+\normalsize
+Gracias por su atención
+\end{center}
+\end{frame}
+
+\end{document}
