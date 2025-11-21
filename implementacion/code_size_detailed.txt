@@ -1,0 +1,231 @@
+bin/benchmark  :
+section               size    addr
+.interp                 28     792
+.note.gnu.property      48     824
+.note.gnu.build-id      36     872
+.note.ABI-tag           32     908
+.gnu.hash               36     944
+.dynsym                264     984
+.dynstr                206    1248
+.gnu.version            22    1454
+.gnu.version_r          80    1480
+.rela.dyn              192    1560
+.rela.plt              120    1752
+.init                   27    4096
+.plt                    96    4128
+.plt.got                16    4224
+.plt.sec                80    4240
+.text                 7825    4320
+.fini                   13   12148
+.rodata                288   12288
+.eh_frame_hdr          124   12576
+.eh_frame              700   12704
+.init_array              8   19864
+.fini_array              8   19872
+.dynamic               496   19880
+.got                   104   20376
+.data                   16   20480
+.bss                     8   20496
+.comment                43       0
+Total                10916
+
+
+bin/comparison_benchmark  :
+section               size    addr
+.interp                 28     792
+.note.gnu.property      48     824
+.note.gnu.build-id      36     872
+.note.ABI-tag           32     908
+.gnu.hash               36     944
+.dynsym                528     984
+.dynstr                445    1512
+.gnu.version            44    1958
+.gnu.version_r         128    2008
+.rela.dyn              192    2136
+.rela.plt              384    2328
+.init                   27    4096
+.plt                   272    4128
+.plt.got                16    4400
+.plt.sec               256    4416
+.text                18787    4672
+.fini                   13   23460
+.rodata               1408   24576
+.eh_frame_hdr          252   25984
+.eh_frame             1772   26240
+.init_array              8   32048
+.fini_array              8   32056
+.dynamic               512   32064
+.got                   192   32576
+.data                   16   32768
+.bss                     8   32784
+.comment                43       0
+Total                25491
+
+
+bin/ejemplo  :
+section               size    addr
+.interp                 28     792
+.note.gnu.property      48     824
+.note.gnu.build-id      36     872
+.note.ABI-tag           32     908
+.gnu.hash               36     944
+.dynsym                192     984
+.dynstr                188    1176
+.gnu.version            16    1364
+.gnu.version_r          80    1384
+.rela.dyn              192    1464
+.rela.plt               48    1656
+.init                   27    4096
+.plt                    48    4128
+.plt.got                16    4176
+.plt.sec                32    4192
+.text                 7377    4224
+.fini                   13   11604
+.rodata                272   12288
+.eh_frame_hdr          132   12560
+.eh_frame              780   12696
+.init_array              8   19888
+.fini_array              8   19896
+.dynamic               496   19904
+.got                    80   20400
+.data                   16   20480
+.bss                     8   20496
+.comment                43       0
+Total                10252
+
+
+bin/gfrx-tool  :
+section               size    addr
+.interp                 28     792
+.note.gnu.property      48     824
+.note.gnu.build-id      36     872
+.note.ABI-tag           32     908
+.gnu.hash               40     944
+.dynsym                648     984
+.dynstr                339    1632
+.gnu.version            54    1972
+.gnu.version_r          96    2032
+.rela.dyn              216    2128
+.rela.plt              480    2344
+.init                   27    4096
+.plt                   336    4128
+.plt.got                16    4464
+.plt.sec               320    4480
+.text                 8481    4800
+.fini                   13   13284
+.rodata                848   16384
+.eh_frame_hdr          156   17232
+.eh_frame              852   17392
+.init_array              8   23840
+.fini_array              8   23848
+.dynamic               496   23856
+.got                   224   24352
+.data                   16   24576
+.bss                    16   24608
+.comment                43       0
+Total                13877
+
+
+bin/test_gfrx_cofb  :
+section               size    addr
+.interp                 28     792
+.note.gnu.property      48     824
+.note.gnu.build-id      36     872
+.note.ABI-tag           32     908
+.gnu.hash               36     944
+.dynsym                264     984
+.dynstr                215    1248
+.gnu.version            22    1464
+.gnu.version_r          80    1488
+.rela.dyn              192    1568
+.rela.plt              120    1760
+.init                   27    4096
+.plt                    96    4128
+.plt.got                16    4224
+.plt.sec                80    4240
+.text                11569    4320
+.fini                   13   15892
+.rodata               2224   16384
+.eh_frame_hdr          196   18608
+.eh_frame             1548   18808
+.init_array              8   23960
+.fini_array              8   23968
+.dynamic               496   23976
+.got                   104   24472
+.data                   16   24576
+.bss                     8   24592
+.comment                43       0
+Total                17525
+
+
+bin/test_gfrx_cofb_debug  :
+section                size     addr
+.interp                  28      792
+.note.gnu.property       48      824
+.note.gnu.build-id       36      872
+.note.ABI-tag            32      908
+.gnu.hash                40      944
+.dynsym                1224      984
+.dynstr                1119     2208
+.gnu.version            102     3328
+.gnu.version_r           64     3432
+.rela.dyn             75264     3496
+.rela.plt              1056    78760
+.init                    27    81920
+.plt                    720    81952
+.plt.got                 16    82672
+.plt.sec                704    82688
+.text                 63905    83392
+.fini                    13   147300
+.rodata               17360   147456
+.eh_frame_hdr           380   164816
+.eh_frame              1752   165200
+.preinit_array            8   170968
+.init_array              40   170976
+.fini_array              40   171016
+.dynamic                560   171056
+.got                    416   171616
+.data                 85088   172032
+.bss                      8   257120
+.comment                 43        0
+.debug_aranges          224        0
+.debug_info           12356        0
+.debug_abbrev          2481        0
+.debug_line            7580        0
+.debug_str             5275        0
+.debug_line_str         660        0
+Total                278669
+
+
+bin/test_gfrx_cofb_profile  :
+section               size    addr
+.interp                 28     792
+.note.gnu.property      48     824
+.note.gnu.build-id      36     872
+.note.ABI-tag           32     908
+.gnu.hash               36     944
+.dynsym                336     984
+.dynstr                243    1320
+.gnu.version            28    1564
+.gnu.version_r          80    1592
+.rela.dyn              216    1672
+.rela.plt              168    1888
+.init                   27    4096
+.plt                   128    4128
+.plt.got                16    4256
+.plt.sec               112    4272
+.text                12077    4384
+.fini                   13   16464
+.rodata               2224   20480
+.eh_frame_hdr          228   22704
+.eh_frame             1072   22936
+.init_array              8   28032
+.fini_array              8   28040
+.dynamic               496   28048
+.got                   128   28544
+.data                   16   28672
+.bss                     8   28688
+.comment                43       0
+Total                17855
+
+

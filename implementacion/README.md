@@ -7,7 +7,7 @@ Implementación de cifrado autenticado GFRX-128/128 con modo COFB.
 - **GFRX-128/128**: Cifrado de bloques ligero (128-bit block, 128-bit key, 32 rounds)
 - **COFB Mode**: Autenticación con datos asociados (AEAD)
 - **Performance**: ~730 Mbps (GFRX), ~500 Mbps (COFB)
-- **Tests**: 1,656 tests exhaustivos
+- **Tests**: 1,666 tests exhaustivos
 
 ## Dependencias
 
@@ -101,7 +101,7 @@ int cofb_decrypt(const byte_t *key, const byte_t *nonce,
 ## Tests
 
 ```bash
-./bin/test_gfrx_cofb    # Ejecutar suite completa (~1,656 tests)
+./bin/test_gfrx_cofb    # Ejecutar suite completa (~1,666 tests)
 ```
 
 **Cobertura:**
@@ -131,6 +131,12 @@ El programa `comparison_benchmark` compara el rendimiento de tres esquemas AEAD:
 Genera métricas de throughput (Mbps) y latencia (μs) para diferentes tamaños de mensaje.
 
 Ver resultados completos en: [COMPARACION_RESULTADOS.md](COMPARACION_RESULTADOS.md)
+
+## Documentación Técnica
+
+- **[TEST_VECTORS.md](TEST_VECTORS.md)**: Vectores de prueba oficiales para validación
+- **[TECHNICAL_ANALYSIS.md](TECHNICAL_ANALYSIS.md)**: Análisis técnico completo de código, performance y seguridad
+- **[COMPARACION_RESULTADOS.md](COMPARACION_RESULTADOS.md)**: Comparación detallada de benchmarks
 
 ## Seguridad
 

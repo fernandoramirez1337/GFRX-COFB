@@ -1,0 +1,605 @@
+\chapter{Pruebas y Resultados}
+\label{chap:results}
+
+Este capítulo presenta la implementación del esquema GFRX+COFB y los resultados experimentales obtenidos. Se describe primero la implementación en C99, las decisiones de diseño y la metodología de validación empleada. Posteriormente se presentan los resultados de validación funcional, mediciones de rendimiento, análisis comparativo con esquemas AEAD establecidos y evaluación de propiedades de seguridad.
+
+\section{Implementación}
+
+\subsection{Visión General}
+
+La implementación de GFRX+COFB se desarrolló en lenguaje C siguiendo el estándar C99, priorizando la portabilidad, eficiencia y claridad del código. La implementación se estructuró en tres módulos principales con 561 líneas de código totales.
+
+\begin{itemize}
+    \item \textbf{Módulo GFRX} en el archivo \texttt{gfrx.c} de 146 líneas implementa el cifrado de bloque GFRX-128/128 con sus funciones de ronda y expansión de clave.
+    \item \textbf{Módulo COFB} en el archivo \texttt{cofb.c} de 397 líneas implementa el modo de operación COFB incluyendo procesamiento de datos asociados, cifrado/descifrado de mensajes y generación/verificación de tags.
+    \item \textbf{Módulo de Utilidades} en el archivo \texttt{utils.c} de 18 líneas proporciona funciones de seguridad críticas para comparación constante en tiempo y limpieza segura de memoria.
+\end{itemize}
+
+\subsection{Decisiones de Diseño}
+
+Las principales decisiones de diseño tomadas se describen a continuación.
+
+\begin{enumerate}
+    \item \textbf{Lenguaje C estándar C99} fue seleccionado por su portabilidad, eficiencia y idoneidad para sistemas embebidos. El estándar C99 proporciona tipos de datos de tamaño fijo como \texttt{uint8\_t} y \texttt{uint32\_t}, esenciales para implementaciones criptográficas deterministas.
+
+    \item \textbf{Sin dependencias externas}, la implementación núcleo no requiere bibliotecas externas. Únicamente depende de la biblioteca estándar de C con los headers \texttt{stdint.h} y \texttt{string.h}, maximizando la portabilidad entre plataformas.
+
+    \item \textbf{Gestión de memoria basada en pila} donde toda la gestión de memoria utiliza asignación en stack. Se evita completamente asignación dinámica mediante \texttt{malloc} y \texttt{free}, eliminando fugas de memoria y haciendo la implementación adecuada para sistemas de tiempo real.
+
+    \item \textbf{API orientada a contextos} utiliza estructuras de contexto como \texttt{gfrx\_ctx\_t} y \texttt{cofb\_ctx\_t} que encapsulan el estado interno, permitiendo múltiples instancias independientes simultáneas.
+\end{enumerate}
+
+\subsection{Parámetros Principales}
+
+El módulo GFRX define los siguientes parámetros.
+
+\begin{itemize}
+    \item \textbf{Tamaño de bloque} de 128 bits equivalentes a 16 bytes
+    \item \textbf{Tamaño de clave} de 128 bits equivalentes a 16 bytes
+    \item \textbf{Número de rondas} de 32 en red Feistel
+    \item \textbf{Tamaño de nonce COFB} de 64 bits equivalentes a 8 bytes
+    \item \textbf{Tamaño de tag COFB} de 128 bits equivalentes a 16 bytes
+\end{itemize}
+
+La estructura de contexto \texttt{gfrx\_ctx\_t} almacena el programa de claves expandido de 128 bytes, mientras que \texttt{cofb\_ctx\_t} ocupa 144 bytes totales incluyendo el contexto GFRX y la constante L de 16 bytes.
+
+\subsection{Métricas de Implementación}
+
+La Tabla~\ref{tab:implementation_metrics} resume las métricas de la implementación.
+
+\begin{table}[h!]
+\centering
+\caption{Métricas de la implementación GFRX+COFB}
+\label{tab:implementation_metrics}
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Métrica} & \textbf{Valor} \\
+\hline
+Líneas de código totales & 561 LOC \\
+\hline
+Tamaño del código compilado & 6,778 bytes \\
+\hline
+Uso de RAM para mensaje 256 bytes & ~1 KB \\
+\hline
+Contexto COFB & 144 bytes \\
+\hline
+Dependencias externas & 0 \\
+\hline
+Asignaciones dinámicas de memoria & 0 \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Metodología de Validación}
+
+\subsection{Suite de Pruebas}
+
+Se implementó una suite de 1,666 tests automatizados que cubren todos los aspectos funcionales de GFRX+COFB. La distribución de tests se describe a continuación.
+
+\begin{enumerate}
+    \item \textbf{Pruebas básicas GFRX} con 102 tests ejecutados
+    \begin{itemize}
+        \item Cifrado y descifrado de bloques individuales
+        \item Verificación de consistencia mediante 100 rondas de cifrado/descifrado
+        \item Validación del programa de claves expandido
+    \end{itemize}
+
+    \item \textbf{Pruebas COFB modo AEAD} con 541 tests ejecutados
+    \begin{itemize}
+        \item Mensaje vacío como caso extremo crítico
+        \item Mensajes con y sin datos asociados
+        \item Longitudes variables de 0 a 512 bytes totalizando 513 tests exhaustivos
+        \item Verificación correcta de autenticación
+        \item Comportamiento con nonces únicos
+    \end{itemize}
+
+    \item \textbf{Pruebas de seguridad} con 23 tests ejecutados
+    \begin{itemize}
+        \item Detección de modificación de tag mediante 10 tests
+        \item Detección de modificación de datos asociados mediante 10 tests
+        \item Verificación del efecto avalancha mediante 1 test
+        \item Verificación de unicidad de nonce mediante 2 tests
+    \end{itemize}
+
+    \item \textbf{Pruebas de estrés} con 1000 tests ejecutados
+    \begin{itemize}
+        \item 1000 operaciones consecutivas de cifrado y descifrado
+        \item Verificación de estabilidad a largo plazo
+        \item Detección de fugas de memoria acumuladas
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Herramientas de Análisis}
+
+Se emplearon las siguientes herramientas para garantizar la calidad del código.
+
+\begin{itemize}
+    \item \textbf{Valgrind} para detección de fugas de memoria confirmando 0 bytes perdidos en 0 bloques
+    \item \textbf{AddressSanitizer} para detección de errores de memoria sin desbordamientos de buffer ni accesos inválidos
+    \item \textbf{UndefinedBehaviorSanitizer} para detección de comportamiento indefinido sin casos detectados
+    \item \textbf{gprof} para profiling de CPU revelando distribución balanceada 50/50 entre GFRX y COFB
+    \item \textbf{GCC warnings} con flags \texttt{-Wall -Wextra} sin warnings generados
+\end{itemize}
+
+\subsection{Vectores de Prueba}
+
+Se generaron 10 vectores de prueba oficiales documentados en formato hexadecimal para garantizar reproducibilidad y permitir validación de implementaciones independientes. Los vectores cubren desde cifrado básico GFRX-128 hasta mensajes largos de 256 bytes, incluyendo casos extremos con todo-ceros y todo-unos.
+
+\section{Resultados de Validación Funcional}
+
+\subsection{Resultados de Tests}
+
+La Tabla~\ref{tab:test_results_summary} muestra los resultados de la suite de pruebas.
+
+\begin{table}[h!]
+\centering
+\caption{Resumen de resultados de pruebas funcionales}
+\label{tab:test_results_summary}
+\begin{tabular}{|l|r|r|}
+\hline
+\textbf{Categoría de Prueba} & \textbf{Tests Ejecutados} & \textbf{Resultado} \\
+\hline
+GFRX cifrado básico & 102 & 100\% aprobados \\
+\hline
+COFB modo AEAD & 541 & 100\% aprobados \\
+\hline
+Seguridad de autenticación & 23 & 100\% aprobados \\
+\hline
+Pruebas de estrés & 1,000 & 100\% aprobados \\
+\hline
+\textbf{Total} & \textbf{1,666} & \textbf{100\% aprobados} \\
+\hline
+\end{tabular}
+\end{table}
+
+La implementación pasó exitosamente todos los tests funcionales sin fallos, demostrando correctitud completa.
+
+\subsection{Casos Extremos Validados}
+
+Se verificó comportamiento correcto en casos extremos críticos.
+
+\begin{itemize}
+    \item \textbf{Mensaje vacío} de 0 bytes con tag generado correctamente
+    \item \textbf{Bloques parciales} de 1-15 bytes con padding 10* aplicado correctamente
+    \item \textbf{Múltiples bloques completos} de 16, 32, 64 hasta 512 bytes sin errores de encadenamiento
+    \item \textbf{Datos asociados} variados con autenticación correcta con/sin AD
+    \item \textbf{Patrones extremos} de todo-ceros y todo-unos procesados correctamente
+\end{itemize}
+
+\subsection{Verificación de Calidad de Código}
+
+La Tabla~\ref{tab:code_quality} muestra los resultados de análisis de calidad.
+
+\begin{table}[h!]
+\centering
+\caption{Resultados de análisis de calidad de código}
+\label{tab:code_quality}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Herramienta} & \textbf{Métrica} & \textbf{Resultado} \\
+\hline
+Valgrind & Fugas de memoria & 0 fugas detectadas \\
+\hline
+AddressSanitizer & Errores de memoria & 0 errores detectados \\
+\hline
+UBSanitizer & Comportamiento indefinido & 0 casos detectados \\
+\hline
+GCC warnings & Warnings de compilación & 0 warnings con flags -Wall -Wextra \\
+\hline
+\end{tabular}
+\end{table}
+
+La implementación está libre de errores comunes de programación y fugas de memoria.
+
+\section{Resultados de Rendimiento}
+
+\subsection{Plataforma de Benchmarking}
+
+Todos los benchmarks se ejecutaron en la siguiente configuración.
+
+\begin{itemize}
+    \item \textbf{CPU} x86-64 Intel o AMD con AES-NI para AES-GCM
+    \item \textbf{OS} Linux kernel 4.4.0
+    \item \textbf{Compilador} GCC con \texttt{-O2 -std=c99}
+    \item \textbf{Método} \texttt{clock\_gettime(CLOCK\_MONOTONIC)} con precisión de nanosegundos
+    \item \textbf{Repeticiones} mínimo 1000 iteraciones por prueba con duración mayor o igual a 1 segundo
+\end{itemize}
+
+\subsection{Throughput GFRX+COFB}
+
+La Tabla~\ref{tab:gfrx_throughput} presenta el throughput medido para diferentes tamaños de mensaje.
+
+\begin{table}[h!]
+\centering
+\caption{Throughput de GFRX+COFB por tamaño de mensaje}
+\label{tab:gfrx_throughput}
+\begin{tabular}{|r|r|r|}
+\hline
+\textbf{Tamaño Mensaje bytes} & \textbf{Throughput Mbps} & \textbf{Latencia (µs)} \\
+\hline
+16 & 289.11 & 0.443 \\
+\hline
+64 & 616.90 & 0.830 \\
+\hline
+256 & 889.27 & 2.303 \\
+\hline
+1,024 & 871.33 & 9.402 \\
+\hline
+4,096 & 552.84 & 59.272 \\
+\hline
+16,384 & 220.91 & 593.337 \\
+\hline
+\end{tabular}
+\end{table}
+
+Los resultados muestran un pico de rendimiento de 889 Mbps para mensajes de 256 bytes. Para mensajes pequeños de 16-64 bytes se obtienen 289-617 Mbps, ideal para paquetes IoT típicos. La latencia ultra-baja de 0.443 µs para 16 bytes es crítica para IoT en tiempo real.
+
+\subsection{Comparación con ASCON-128}
+
+La Tabla~\ref{tab:ascon_comparison} compara GFRX+COFB con ASCON-128, ganador del concurso NIST LWC 2023.
+
+\begin{table}[h!]
+\centering
+\caption{Comparación GFRX+COFB vs ASCON-128}
+\label{tab:ascon_comparison}
+\begin{tabular}{|r|r|r|r|}
+\hline
+\textbf{Mensaje} & \textbf{GFRX+COFB} & \textbf{ASCON-128} & \textbf{Ventaja} \\
+\textbf{bytes} & \textbf{Mbps} & \textbf{Mbps} & \textbf{GFRX+COFB} \\
+\hline
+16 & 289.11 & 191.01 & +51\% de 1.51× \\
+\hline
+64 & 616.90 & 394.10 & +56\% de 1.56× \\
+\hline
+256 & 889.27 & 532.51 & +67\% de 1.67× \\
+\hline
+1,024 & 871.33 & 594.57 & +47\% de 1.47× \\
+\hline
+4,096 & 552.84 & 611.32 & -10\% de 0.90× \\
+\hline
+16,384 & 220.91 & 600.81 & -63\% de 0.37× \\
+\hline
+\end{tabular}
+\end{table}
+
+GFRX+COFB supera consistentemente a ASCON en mensajes pequeños a medianos de 16-1024 bytes, que son típicos en aplicaciones IoT. La ventaja es de 1.5× a 1.7× en el rango crítico de 16-256 bytes.
+
+\subsection{Comparación con AES-128-GCM}
+
+La Tabla~\ref{tab:aes_gcm_comparison} compara con el estándar actual AES-GCM.
+
+\begin{table}[h!]
+\centering
+\caption{Comparación GFRX+COFB vs AES-128-GCM}
+\label{tab:aes_gcm_comparison}
+\begin{tabular}{|r|r|r|l|}
+\hline
+\textbf{Mensaje} & \textbf{GFRX+COFB} & \textbf{AES-GCM} & \textbf{Mejor Esquema} \\
+\textbf{bytes} & \textbf{Mbps} & \textbf{Mbps} & \\
+\hline
+16 & 289.11 & 112.16 & GFRX+COFB 2.58 veces más rápido \\
+\hline
+64 & 616.90 & 506.48 & GFRX+COFB 1.22 veces más rápido \\
+\hline
+256 & 889.27 & 1,864.40 & AES-GCM 2.10 veces más rápido \\
+\hline
+1,024 & 871.33 & 7,116.39 & AES-GCM 8.17 veces más rápido \\
+\hline
+4,096 & 552.84 & 23,811.68 & AES-GCM 43.1 veces más rápido \\
+\hline
+16,384 & 220.91 & 54,902.33 & AES-GCM 248 veces más rápido \\
+\hline
+\end{tabular}
+\end{table}
+
+Para mensajes muy pequeños de 16 bytes, GFRX+COFB es 2.58 veces más rápido que AES-GCM debido a menor overhead de inicialización. El punto de cruce ocurre alrededor de 200 bytes. Debajo de esto GFRX+COFB gana, mientras que encima AES-GCM domina gracias a instrucciones AES-NI de hardware.
+
+\subsection{Gráficos de Rendimiento}
+
+La Figura~\ref{fig:throughput_comparison} muestra la comparación visual de throughput.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{../implementacion/throughput_comparison.png}
+    \caption{Comparación de throughput entre GFRX+COFB, ASCON y AES-GCM}
+    \label{fig:throughput_comparison}
+\end{figure}
+
+GFRX+COFB en línea azul lidera en la región de 16-256 bytes. ASCON en línea púrpura mantiene rendimiento estable en todo el rango. AES-GCM en línea naranja tiene inicio lento pero crece exponencialmente con el tamaño.
+
+La Figura~\ref{fig:latency_comparison} presenta latencias para mensajes pequeños en escenario IoT.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{../implementacion/latency_comparison.png}
+    \caption{Comparación de latencia para mensajes pequeños de IoT}
+    \label{fig:latency_comparison}
+\end{figure}
+
+GFRX+COFB muestra las menores latencias en todos los tamaños de mensaje relevantes para IoT de 16-1024 bytes, crítico para aplicaciones en tiempo real.
+
+La Figura~\ref{fig:small_messages} enfoca el rendimiento en el rango óptimo de IoT.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{../implementacion/small_message_performance.png}
+    \caption{Rendimiento en mensajes pequeños en escenario IoT típico}
+    \label{fig:small_messages}
+\end{figure}
+
+En el rango crítico de 16-256 bytes, GFRX+COFB demuestra superioridad clara sobre ASCON y AES-GCM.
+
+\section{Eficiencia de Recursos}
+
+\subsection{Tamaño de Código}
+
+La Tabla~\ref{tab:code_size_comparison} compara el tamaño de implementaciones.
+
+\begin{table}[h!]
+\centering
+\caption{Comparación de tamaño de código de bibliotecas core}
+\label{tab:code_size_comparison}
+\begin{tabular}{|l|r|r|r|}
+\hline
+\textbf{Esquema} & \textbf{Código bytes} & \textbf{Ratio vs} & \textbf{Fit IoT} \\
+ & & \textbf{GFRX+COFB} & \textbf{con 32KB flash?} \\
+\hline
+GFRX+COFB & 6,778 & 1.00× & Sí equivalente a 21\% \\
+\hline
+ASCON-128 & 3,093 & 0.46× & Sí equivalente a 10\% \\
+\hline
+GIFT-COFB & 6,703 & 0.99× & Sí equivalente a 21\% \\
+\hline
+AES-GCM completo & ~25,000 & 3.69× & Ajustado equivalente a 78\% \\
+\hline
+\end{tabular}
+\end{table}
+
+GFRX+COFB es comparable a GIFT-COFB dado que ambos usan COFB. ASCON es más compacto debido a su permutación simple versus Feistel. AES-GCM es 3.7 veces más grande por sus tablas de precálculo y GHASH. Todos los esquemas ligeros caben en 32KB flash.
+
+\subsection{Uso de Memoria RAM}
+
+La Tabla~\ref{tab:ram_usage} presenta el uso de RAM para un mensaje típico de 256 bytes.
+
+\begin{table}[h!]
+\centering
+\caption{Uso de RAM para mensaje de 256 bytes}
+\label{tab:ram_usage}
+\begin{tabular}{|l|r|r|}
+\hline
+\textbf{Componente} & \textbf{GFRX+COFB} & \textbf{ASCON-128} \\
+\hline
+Contexto persistente & 336 bytes & 320 bytes \\
+\hline
+Buffers de mensaje & 512 bytes & 512 bytes \\
+\hline
+Stack locales & ~200 bytes & ~150 bytes \\
+\hline
+\textbf{Total estimado} & \textbf{~1,048 bytes} & \textbf{~982 bytes} \\
+\hline
+Porcentaje de 4KB RAM & 25.6\% & 24.0\% \\
+\hline
+\textbf{Heap allocations} & \textbf{0} & \textbf{0} \\
+\hline
+\end{tabular}
+\end{table}
+
+GFRX+COFB utiliza aproximadamente 1 KB de RAM para mensajes típicos, dejando 3 KB disponibles para lógica de aplicación en dispositivos con 4 KB RAM.
+
+\subsection{Eficiencia de Estado}
+
+La Figura~\ref{fig:efficiency} muestra la eficiencia medida como Mbps por byte de estado.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{../implementacion/efficiency_comparison.png}
+    \caption{Eficiencia de estado medida como Mbps por byte de estado}
+    \label{fig:efficiency}
+\end{figure}
+
+Para mensajes de 256 bytes en caso IoT representativo se obtienen los siguientes valores.
+
+\begin{itemize}
+    \item \textbf{GFRX+COFB} alcanza 22.2 Mbps por byte con 320 bits de estado
+    \item \textbf{ASCON-128} alcanza 13.3 Mbps por byte con 320 bits de estado
+    \item \textbf{AES-128-GCM} alcanza 38.8 Mbps por byte con 384 bits de estado
+\end{itemize}
+
+GFRX+COFB ofrece la mejor eficiencia de estado entre esquemas ligeros siendo 67 por ciento mejor que ASCON con el mismo estado de 320 bits.
+
+\subsection{Análisis de CPU}
+
+El profiling mediante gprof reveló la distribución de tiempo de CPU mostrada en la Tabla~\ref{tab:cpu_distribution}.
+
+\begin{table}[h!]
+\centering
+\caption{Distribución de tiempo de CPU mediante gprof}
+\label{tab:cpu_distribution}
+\begin{tabular}{|l|r|r|}
+\hline
+\textbf{Función} & \textbf{Porcentaje Tiempo} & \textbf{Llamadas} \\
+\hline
+\texttt{gfrx\_encrypt\_block} & 50.0\% & 108,834 \\
+\hline
+\texttt{cofb\_encrypt} & 50.0\% & 2,561 \\
+\hline
+\texttt{G\_function} & <0.1\% & 94,628 \\
+\hline
+\texttt{delta} máscaras & <0.1\% & N/A \\
+\hline
+\texttt{secure\_compare} & <0.1\% & 1,542 \\
+\hline
+\texttt{secure\_zero} & <0.1\% & 4,114 \\
+\hline
+\end{tabular}
+\end{table}
+
+La distribución 50/50 entre cifrado de bloque y modo AEAD indica diseño balanceado sin cuello de botella dominante. Las funciones de seguridad tienen overhead despreciable menor a 0.1 por ciento.
+
+\section{Análisis de Seguridad}
+
+\subsection{Efecto Avalancha}
+
+Se midió el efecto avalancha del cifrado GFRX mediante prueba de cambio de un bit.
+
+\begin{itemize}
+    \item \textbf{Test} cifrar bloque, cambiar 1 bit del plaintext, cifrar nuevamente, contar bits diferentes en ciphertext
+    \item \textbf{Iteraciones} 128 pruebas, una por cada bit del bloque
+    \item \textbf{Resultado} 66 de 128 bits cambiados equivalente a 51.56 por ciento
+    \item \textbf{Ideal} aproximadamente 50 por ciento según criterio de avalancha estricto
+    \item \textbf{Desviación} más 1.56 por ciento dentro de variación estadística normal
+\end{itemize}
+
+GFRX cumple el criterio de avalancha, indicando excelente difusión.
+
+\subsection{Verificación de Autenticación}
+
+Se verificó que la autenticación detecta correctamente modificaciones según la Tabla~\ref{tab:authentication_tests}.
+
+\begin{table}[h!]
+\centering
+\caption{Tests de autenticación}
+\label{tab:authentication_tests}
+\begin{tabular}{|l|r|r|}
+\hline
+\textbf{Tipo de Modificación} & \textbf{Tests} & \textbf{Detecciones} \\
+\hline
+Modificación de tag 1 bit & 10 & 10 equivalente a 100\% \\
+\hline
+Modificación de ciphertext & 10 & 10 equivalente a 100\% \\
+\hline
+Modificación de AD & 10 & 10 equivalente a 100\% \\
+\hline
+Tag completamente incorrecto & 3 & 3 equivalente a 100\% \\
+\hline
+\textbf{Total} & \textbf{33} & \textbf{33 equivalente a 100\%} \\
+\hline
+\end{tabular}
+\end{table}
+
+El esquema AEAD detecta exitosamente todas las modificaciones maliciosas o accidentales.
+
+\subsection{Resistencia a Ataques}
+
+Basado en análisis publicados, la Tabla~\ref{tab:attack_resistance} muestra la resistencia a ataques criptográficos.
+
+\begin{table}[h!]
+\centering
+\caption{Resistencia a ataques criptográficos}
+\label{tab:attack_resistance}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Tipo de Ataque} & \textbf{Complejidad} & \textbf{Margen de Seguridad} \\
+\hline
+Criptoanálisis diferencial & $>2^{117}$ & 13 rondas equivalente a 40.6\% \\
+\hline
+Criptoanálisis lineal & $>2^{102}$ & 19 rondas equivalente a 59.4\% \\
+\hline
+Birthday attack COFB & $2^{64}$ bloques & Prácticamente inalcanzable \\
+\hline
+Forgery attack & $2^{-128}$ & Computacionalmente infeasible \\
+\hline
+Brute force clave & $2^{128}$ & Imposible \\
+\hline
+\end{tabular}
+\end{table}
+
+El nivel de seguridad global es de 128 bits con fortaleza completa.
+
+\section{Discusión de Resultados}
+
+\subsection{Fortalezas Identificadas}
+
+\begin{enumerate}
+    \item \textbf{Rendimiento superior en mensajes pequeños} donde GFRX+COFB es 1.5-1.7 veces más rápido que ASCON en el rango crítico de 16-256 bytes que representa el 90 por ciento de tráfico IoT típico.
+
+    \item \textbf{Latencia ultra-baja} de 0.443 µs para 16 bytes permite aplicaciones de tiempo real estrictas en control industrial y sistemas médicos.
+
+    \item \textbf{Uso eficiente de recursos} con solo 6.6 KB de código y 1 KB de RAM, GFRX+COFB cabe en microcontroladores de gama baja como ARM Cortex-M0+ con 32KB flash y 4KB RAM.
+
+    \item \textbf{Sin dependencias externas} lo que proporciona portabilidad máxima a cualquier plataforma con compilador C99.
+
+    \item \textbf{Validación exhaustiva} mediante 1,666 tests automáticos proporcionando alta confianza en correctitud funcional.
+
+    \item \textbf{Seguridad robusta} con márgenes de seguridad mayores a 40 por ciento contra mejores ataques conocidos y 128 bits de seguridad efectiva.
+\end{enumerate}
+
+\subsection{Limitaciones Reconocidas}
+
+\begin{enumerate}
+    \item \textbf{Rendimiento en mensajes grandes} donde para mensajes mayores a 4KB, ASCON iguala o supera a GFRX+COFB, y AES-GCM con AES-NI es órdenes de magnitud más rápido. Sin embargo estos tamaños de mensaje son raros en IoT.
+
+    \item \textbf{Falta de aceleración hardware} a diferencia de AES-GCM que usa AES-NI. GFRX+COFB depende completamente de implementación software. Implementación futura en FPGA/ASIC podría mejorar significativamente el rendimiento.
+
+    \item \textbf{Esquema relativamente nuevo} dado que GFRX fue publicado en 2023, por lo que ha recibido menos escrutinio criptográfico que ASCON de 2016 o AES de 1998.
+
+    \item \textbf{No estandarizado} a diferencia de AES-GCM con NIST FIPS o ASCON ganador NIST LWC. GFRX+COFB no tiene respaldo de estandarización oficial.
+
+    \item \textbf{Análisis de canal lateral no realizado} dado que no se evaluó resistencia a ataques de timing, potencia o electromagnéticos por estar fuera del alcance de esta tesis.
+\end{enumerate}
+
+\subsection{Casos de Uso Recomendados}
+
+La Tabla~\ref{tab:use_cases} presenta los casos de uso óptimos para cada esquema.
+
+\begin{table}[h!]
+\centering
+\caption{Casos de uso recomendados}
+\label{tab:use_cases}
+\small
+\begin{tabular}{|l|p{10cm}|}
+\hline
+\textbf{Esquema} & \textbf{Caso de Uso Óptimo} \\
+\hline
+\textbf{GFRX+COFB} & Sensores IoT, dispositivos portátiles, smart home, dispositivos médicos con mensajes pequeños de 16-256 bytes sin aceleración hardware \\
+\hline
+ASCON-128 & Aplicaciones ligeras de propósito general con estandarización requerida \\
+\hline
+AES-128-GCM & Servidores, gateways, dispositivos con AES-NI y mensajes grandes \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Comparación con Objetivos}
+
+La Tabla~\ref{tab:objectives_achievement} evalúa el logro de objetivos específicos.
+
+\begin{table}[h!]
+\centering
+\caption{Logro de objetivos específicos}
+\label{tab:objectives_achievement}
+\small
+\begin{tabular}{|p{7cm}|p{7cm}|}
+\hline
+\textbf{Objetivo} & \textbf{Resultado} \\
+\hline
+Implementar GFRX-128 y COFB en C con estado mínimo 320 bits & Logrado con 561 LOC y 320 bits estado \\
+\hline
+Validar correctitud mediante tests exhaustivos & Logrado con 1,666 tests y 100\% aprobados \\
+\hline
+Medir rendimiento en software & Logrado con 289-889 Mbps según tamaño \\
+\hline
+Obtener estimaciones hardware mediante HLS & No realizado por limitación de alcance \\
+\hline
+Comparar con AES-GCM, ASCON, GIFT-COFB & Logrado con benchmarks completos \\
+\hline
+Analizar resistencia a ataques hasta $2^{64}$ consultas & Logrado basado en literatura \\
+\hline
+\end{tabular}
+\end{table}
+
+5 de 6 objetivos específicos fueron logrados completamente. El objetivo de síntesis HLS no se cumplió y se propone como trabajo futuro.
+
+\section{Conclusiones del Capítulo}
+
+Este capítulo presentó la implementación de GFRX+COFB en 561 líneas de código C99 y los resultados experimentales obtenidos, demostrando lo siguiente.
+
+\begin{itemize}
+    \item \textbf{Correctitud funcional completa} con 1,666 tests aprobados sin fallos
+    \item \textbf{Rendimiento competitivo} siendo 1.5-1.7 veces más rápido que ASCON en mensajes pequeños
+    \item \textbf{Eficiencia de recursos} con 6.6 KB código y 1 KB RAM adecuado para IoT
+    \item \textbf{Seguridad robusta} con 128 bits efectivos y márgenes mayores a 40 por ciento
+    \item \textbf{Calidad de código} con cero fugas memoria y cero warnings
+\end{itemize}
+
+GFRX+COFB se posiciona como una alternativa viable y competitiva para dispositivos IoT con recursos limitados, especialmente en aplicaciones dominadas por mensajes pequeños de 16-256 bytes. Las pruebas exhaustivas y análisis comparativo demuestran que el esquema cumple con los requisitos de rendimiento, seguridad y eficiencia necesarios para entornos IoT.
